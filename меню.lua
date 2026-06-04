@@ -16,7 +16,9 @@ local Fatality = {
     Accent = Color3.fromRGB(180, 0, 255),
     Secondary = Color3.fromRGB(255, 0, 150),
     Options = {},
-    ConfigFolder = "FatalityConfigs"
+    ConfigFolder = "FatalityConfigs",
+    Gradients = {},
+    AccentObjects = {}
 }
 
 local Theme = {
@@ -36,6 +38,29 @@ local function Create(class, props)
     local inst = Instance.new(class)
     for k, v in pairs(props) do inst[k] = v end
     return inst
+end
+
+function Fatality:SetTheme(accent, secondary)
+    self.Accent = accent or self.Accent
+    self.Secondary = secondary or self.Secondary
+
+    local newGradient = ColorSequence.new({
+        ColorSequenceKeypoint.new(0, self.Accent),
+        ColorSequenceKeypoint.new(1, self.Secondary)
+    })
+
+    for _, grad in pairs(self.Gradients) do
+        if grad and grad.Parent then
+            grad.Color = newGradient
+        end
+    end
+
+    for _, obj in pairs(self.AccentObjects) do
+        if obj and obj.Parent then
+            -- Обновляем сплошные цвета (молнии, ползунки слайдеров)
+            obj.BackgroundColor3 = self.Accent
+        end
+    end
 end
 
 -- Створення папки для конфігів при ініціалізації
@@ -135,12 +160,13 @@ function Fatality:CreateWindow(titleText)
         local line = Instance.new("Frame")
         line.Parent = LightningFolder
         line.BorderSizePixel = 0
-        line.BackgroundColor3 = Color3.fromRGB(180, 0, 255)
+        line.BackgroundColor3 = Fatality.Accent
         line.BackgroundTransparency = 0.85
         line.Size = UDim2.new(0, math.random(80, 180), 0, 2)
         line.Position = UDim2.new(math.random(), 0, math.random(), 0)
         line.Rotation = math.random(-70, 70)
         line.ZIndex = 0
+        table.insert(Fatality.AccentObjects, line)
 
         task.spawn(function()
             while line.Parent do
@@ -159,7 +185,8 @@ function Fatality:CreateWindow(titleText)
         BorderSizePixel = 0,
         Parent = Main
     })
-    Create("UIGradient", { Color = Theme.AccentGradient, Parent = Bar })
+    local BarGrad = Create("UIGradient", { Color = Theme.AccentGradient, Parent = Bar })
+    table.insert(self.Gradients, BarGrad)
 
     local Sidebar = Create("Frame", {
         Size = UDim2.new(0, 160, 1, -2),
@@ -178,7 +205,8 @@ function Fatality:CreateWindow(titleText)
         TextSize = 22,
         Parent = Sidebar
     })
-    Create("UIGradient", { Color = Theme.AccentGradient, Parent = Logo })
+    local LogoGrad = Create("UIGradient", { Color = Theme.AccentGradient, Parent = Logo })
+    table.insert(self.Gradients, LogoGrad)
 
     local TabContainer = Create("Frame", {
         Size = UDim2.new(1, 0, 1, -60),
@@ -380,6 +408,7 @@ function Fatality:CreateWindow(titleText)
                 local Bg = Create("Frame", { Size = UDim2.new(1, 0, 0, 6), Position = UDim2.new(0, 0, 0, 24), BackgroundColor3 = Theme.Outline, Parent = SldFrame })
                 local Fill = Create("Frame", { Size = UDim2.new((default-min)/(max-min), 0, 1, 0), BackgroundColor3 = Fatality.Accent, Parent = Bg })
                 local ValText = Create("TextLabel", { Size = UDim2.new(0, 40, 0, 18), Position = UDim2.new(1, -40, 0, 0), BackgroundTransparency = 1, Text = tostring(default), TextColor3 = Theme.TextDark, Font = Fatality.Font, TextSize = 12, Parent = SldFrame })
+                table.insert(Fatality.AccentObjects, Fill)
 
                 function Sld:Set(v)
                     local p = math.clamp((v - min) / (max - min), 0, 1)
@@ -472,7 +501,8 @@ function Fatality:Notify(title, text)
     })
     Create("UIStroke", { Color = Theme.Outline, Parent = NotifyFrame })
     local Line = Create("Frame", { Size = UDim2.new(1, 0, 0, 2), Parent = NotifyFrame })
-    Create("UIGradient", { Color = Theme.AccentGradient, Parent = Line })
+    local NotifyGrad = Create("UIGradient", { Color = Theme.AccentGradient, Parent = Line })
+    table.insert(self.Gradients, NotifyGrad)
 
     Create("TextLabel", { Size = UDim2.new(1, -20, 0, 25), Position = UDim2.new(0, 10, 0, 5), BackgroundTransparency = 1, Text = title:upper(), TextColor3 = Fatality.Accent, Font = Fatality.Font, TextSize = 14, TextXAlignment = Enum.TextXAlignment.Left, Parent = NotifyFrame })
     Create("TextLabel", { Size = UDim2.new(1, -20, 0, 25), Position = UDim2.new(0, 10, 0, 25), BackgroundTransparency = 1, Text = text, TextColor3 = Theme.Text, Font = Fatality.Font, TextSize = 12, TextXAlignment = Enum.TextXAlignment.Left, Parent = NotifyFrame })
