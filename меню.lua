@@ -1,6 +1,5 @@
 --[[
-    FATALITY.WIN UI FRAMEWORK
-    Style: Fatality CS:GO (Purple/Pink/Dark)
+    FATALITY.WIN
 ]]
 
 local UserInputService = game:GetService("UserInputService")
@@ -140,9 +139,9 @@ function Fatality:CreateWindow(titleText)
     end)
     Main.InputEnded:Connect(function(input) if input.UserInputType == Enum.UserInputType.MouseButton1 then dragging = false end end)
 
-    -- Перемикання видимості вікна (Insert)
+    -- Перемикання видимості вікна (Insert / RightShift)
     UserInputService.InputBegan:Connect(function(input)
-        if input.KeyCode == Enum.KeyCode.Insert then
+        if input.KeyCode == Enum.KeyCode.Insert or input.KeyCode == Enum.KeyCode.RightShift then
             Window.Visible = not Window.Visible
             Main.Visible = Window.Visible
         end
@@ -193,7 +192,7 @@ function Fatality:CreateWindow(titleText)
 
             local SectionTitle = Create("TextLabel", {
                 Size = UDim2.new(0, 0, 0, 18),
-                Position = UDim2.new(0, 10, 0, -10),
+                Position = UDim2.new(0, 10, 0, -9),
                 BackgroundColor3 = Theme.Main,
                 Text = " " .. sName .. " ",
                 TextColor3 = Theme.Text,
@@ -216,6 +215,79 @@ function Fatality:CreateWindow(titleText)
             end)
 
             local Elements = {}
+
+            function Elements:AddColorPicker(text, default, flag, callback)
+                local CP = { Value = default, Type = "ColorPicker" }
+                local Frame = Create("Frame", { Size = UDim2.new(1, 0, 0, 20), BackgroundTransparency = 1, Parent = Content })
+                
+                local Label = Create("TextLabel", {
+                    Size = UDim2.new(1, -30, 1, 0),
+                    Position = UDim2.new(0, 0, 0, 0),
+                    BackgroundTransparency = 1,
+                    Text = text,
+                    TextColor3 = Theme.Text,
+                    Font = Fatality.Font,
+                    TextSize = 13,
+                    TextXAlignment = Enum.TextXAlignment.Left,
+                    Parent = Frame
+                })
+
+                local Box = Create("TextButton", {
+                    Size = UDim2.new(0, 25, 0, 14),
+                    Position = UDim2.new(1, -30, 0.5, -7),
+                    BackgroundColor3 = default,
+                    BorderSizePixel = 0,
+                    Text = "",
+                    Parent = Frame
+                })
+
+                function CP:Set(val)
+                    if typeof(val) == "table" then val = Color3.new(val.R, val.G, val.B) end
+                    CP.Value = val
+                    Box.BackgroundColor3 = val
+                    callback(val)
+                end
+
+                Box.MouseButton1Click:Connect(function() callback(CP.Value) end)
+                if flag then Fatality.Options[flag] = CP end
+                return CP
+            end
+
+            function Elements:AddColorPicker(text, default, flag, callback)
+                local CP = { Value = default, Type = "ColorPicker" }
+                local Frame = Create("Frame", { Size = UDim2.new(1, 0, 0, 20), BackgroundTransparency = 1, Parent = Content })
+                
+                local Label = Create("TextLabel", {
+                    Size = UDim2.new(1, -30, 1, 0),
+                    Position = UDim2.new(0, 0, 0, 0),
+                    BackgroundTransparency = 1,
+                    Text = text,
+                    TextColor3 = Theme.Text,
+                    Font = Fatality.Font,
+                    TextSize = 13,
+                    TextXAlignment = Enum.TextXAlignment.Left,
+                    Parent = Frame
+                })
+
+                local Box = Create("TextButton", {
+                    Size = UDim2.new(0, 25, 0, 14),
+                    Position = UDim2.new(1, -30, 0.5, -7),
+                    BackgroundColor3 = default,
+                    BorderSizePixel = 0,
+                    Text = "",
+                    Parent = Frame
+                })
+
+                function CP:Set(val)
+                    CP.Value = val
+                    Box.BackgroundColor3 = val
+                    callback(val)
+                end
+
+                Box.MouseButton1Click:Connect(function() callback(CP.Value) end)
+                if flag then Fatality.Options[flag] = CP end
+                return CP
+            end
 
             function Elements:AddToggle(text, default, flag, callback)
                 local Tgl = { Value = default, Type = "Toggle" }
