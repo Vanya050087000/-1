@@ -1,9 +1,7 @@
 --[[
-    FATALITY.WIN UI FRAMEWORK v2.0
+    FATALITY.WIN UI FRAMEWORK
     Style: Fatality CS:GO (Purple/Pink/Dark)
-    Enhanced with loading screen, particles, customizable themes
 ]]
-
 local UserInputService = game:GetService("UserInputService")
 local TweenService = game:GetService("TweenService")
 local RunService = game:GetService("RunService")
@@ -11,16 +9,14 @@ local LocalPlayer = game.Players.LocalPlayer
 local HttpService = game:GetService("HttpService")
 local Mouse = LocalPlayer:GetMouse()
 local CoreGui = game:GetService("CoreGui")
-
+local Players = game:GetService("Players")
 local Fatality = {
     Font = Enum.Font.RobotoMono,
     Accent = Color3.fromRGB(180, 0, 255),
     Secondary = Color3.fromRGB(255, 0, 150),
     Options = {},
-    ConfigFolder = "FatalityConfigs",
-    Loaded = false
+    ConfigFolder = "FatalityConfigs"
 }
-
 local Theme = {
     Main = Color3.fromRGB(15, 15, 22),
     Sidebar = Color3.fromRGB(12, 12, 18),
@@ -40,7 +36,7 @@ local function Create(class, props)
     return inst
 end
 
--- Створення папки для конфігів
+-- Створення папки для конфігів при ініціалізації
 if makefolder then
     pcall(makefolder, Fatality.ConfigFolder)
 end
@@ -50,26 +46,29 @@ local function CreateParticles(parent)
     local particleContainer = Create("Frame", {
         Size = UDim2.new(1, 0, 1, 0),
         BackgroundTransparency = 1,
-        ZIndex = 1,
-        Parent = parent
+        Parent = parent,
+        ZIndex = 0
     })
 
-    for i = 1, 20 do
-        spawn(function()
-            local particle = Create("Frame", {
-                Size = UDim2.new(0, math.random(2, 4), 0, math.random(2, 4)),
-                Position = UDim2.new(math.random(), 0, math.random(), 0),
-                BackgroundColor3 = Color3.fromRGB(180, 0, 255),
-                BackgroundTransparency = 0.7,
-                BorderSizePixel = 0,
-                ZIndex = 1,
-                Parent = particleContainer
-            })
+    for i = 1, 15 do
+        local particle = Create("Frame", {
+            Size = UDim2.new(0, math.random(2, 4), 0, math.random(2, 4)),
+            Position = UDim2.new(math.random(), 0, math.random(), 0),
+            BackgroundColor3 = Color3.fromRGB(180, 0, 255),
+            BackgroundTransparency = 0.7,
+            BorderSizePixel = 0,
+            Parent = particleContainer,
+            ZIndex = 0
+        })
 
+        -- Animate particles
+        spawn(function()
             while particle and particle.Parent do
-                local tweenInfo = TweenInfo.new(math.random(4, 8), Enum.EasingStyle.Linear, Enum.EasingDirection.InOut)
+                local newX = math.random()
+                local newY = math.random()
+                local tweenInfo = TweenInfo.new(math.random(3, 6), Enum.EasingStyle.Linear, Enum.EasingDirection.InOut)
                 local tween = TweenService:Create(particle, tweenInfo, {
-                    Position = UDim2.new(math.random(), 0, math.random(), 0),
+                    Position = UDim2.new(newX, 0, newY, 0),
                     BackgroundTransparency = math.random(60, 90) / 100
                 })
                 tween:Play()
@@ -80,22 +79,23 @@ local function CreateParticles(parent)
 end
 
 -- Loading Screen
-function Fatality:ShowLoading(callback)
+function Fatality:ShowLoading()
     local loadingGui = Create("ScreenGui", {
         Name = "FatalityLoading",
         Parent = CoreGui,
         DisplayOrder = 999,
-        ZIndexBehavior = Enum.ZIndexBehavior.Global,
-        ResetOnSpawn = false
+        ZIndexBehavior = Enum.ZIndexBehavior.Global
     })
 
     local loadingFrame = Create("Frame", {
         Size = UDim2.new(1, 0, 1, 0),
         BackgroundColor3 = Color3.fromRGB(10, 10, 15),
         BorderSizePixel = 0,
-        BackgroundTransparency = 1,
         Parent = loadingGui
     })
+
+    -- Create particles in background
+    CreateParticles(loadingFrame)
 
     -- Center container
     local centerFrame = Create("Frame", {
@@ -119,7 +119,7 @@ function Fatality:ShowLoading(callback)
         Parent = centerFrame
     })
 
-    Create("UIGradient", {
+    local logoGradient = Create("UIGradient", {
         Color = ColorSequence.new({
             ColorSequenceKeypoint.new(0, Color3.fromRGB(180, 0, 255)),
             ColorSequenceKeypoint.new(0.5, Color3.fromRGB(255, 0, 150)),
@@ -145,7 +145,7 @@ function Fatality:ShowLoading(callback)
         Parent = barBg
     })
 
-    Create("UIGradient", {
+    local barGradient = Create("UIGradient", {
         Color = ColorSequence.new({
             ColorSequenceKeypoint.new(0, Color3.fromRGB(180, 0, 255)),
             ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 0, 150))
@@ -158,7 +158,7 @@ function Fatality:ShowLoading(callback)
         Size = UDim2.new(1, 0, 0, 20),
         Position = UDim2.new(0, 0, 0, 115),
         BackgroundTransparency = 1,
-        Text = "Initializing...",
+        Text = "Loading...",
         TextColor3 = Color3.fromRGB(160, 160, 170),
         Font = Fatality.Font,
         TextSize = 14,
@@ -166,7 +166,7 @@ function Fatality:ShowLoading(callback)
     })
 
     -- Version text
-    Create("TextLabel", {
+    local versionText = Create("TextLabel", {
         Size = UDim2.new(1, 0, 0, 20),
         Position = UDim2.new(0, 0, 0, 140),
         BackgroundTransparency = 1,
@@ -177,32 +177,36 @@ function Fatality:ShowLoading(callback)
         Parent = centerFrame
     })
 
-    -- Fade in
-    TweenService:Create(loadingFrame, TweenInfo.new(0.3), {
-        BackgroundTransparency = 0
-    }):Play()
-
-    -- Loading animation
+    -- Animation sequence
     spawn(function()
+        -- Fade in
+        loadingFrame.BackgroundTransparency = 1
+        TweenService:Create(loadingFrame, TweenInfo.new(0.3), {
+            BackgroundTransparency = 0
+        }):Play()
+
+        -- Loading bar animation with sound-like effects
         local phases = {
-            {time = 0.3, percent = 0.2, text = "Loading components..."},
-            {time = 0.4, percent = 0.5, text = "Initializing UI..."},
-            {time = 0.3, percent = 0.7, text = "Loading scripts..."},
-            {time = 0.4, percent = 0.9, text = "Finalizing..."},
-            {time = 0.2, percent = 1.0, text = "Complete!"}
+            {time = 0.3, percent = 0.2},
+            {time = 0.5, percent = 0.5},
+            {time = 0.3, percent = 0.7},
+            {time = 0.5, percent = 0.9},
+            {time = 0.2, percent = 1.0}
         }
 
+        -- Play loading sound effect (simulated)
         for _, phase in ipairs(phases) do
-            loadingText.Text = phase.text
+            loadingText.Text = "Loading components..."
             TweenService:Create(barFill, TweenInfo.new(phase.time, Enum.EasingStyle.Quad), {
                 Size = UDim2.new(phase.percent, 0, 1, 0)
             }):Play()
             wait(phase.time)
         end
 
-        wait(0.3)
+        loadingText.Text = "Complete!"
         
         -- Fade out
+        wait(0.5)
         TweenService:Create(loadingFrame, TweenInfo.new(0.5), {
             BackgroundTransparency = 1
         }):Play()
@@ -210,11 +214,6 @@ function Fatality:ShowLoading(callback)
         
         loadingGui:Destroy()
         Fatality.Loaded = true
-        
-        -- Call callback after loading
-        if callback then
-            callback()
-        end
     end)
 end
 
@@ -249,89 +248,31 @@ function Fatality:CreateWindow(titleText)
     local ScreenGui = Create("ScreenGui", {
         Name = "FatalityWin_" .. titleText,
         Parent = CoreGui,
-        ZIndexBehavior = Enum.ZIndexBehavior.Global,
-        ResetOnSpawn = false
+        ZIndexBehavior = Enum.ZIndexBehavior.Global
     })
 
     local Main = Create("Frame", {
-        Size = UDim2.new(0, 680, 0, 540),
+        Size = UDim2.new(0, 620, 0, 480),
         Position = UDim2.new(0.5, -310, 0.5, -240),
         BackgroundColor3 = Theme.Main,
         BorderSizePixel = 0,
-        Visible = true,
         Parent = ScreenGui
     })
 
-    -- Corner rounding
-    local UICorner = Create("UICorner", {
-        CornerRadius = UDim.new(0, 6),
-        Parent = Main
-    })
-
-    -- Background particles
-    CreateParticles(Main)
-
-    -- Top accent bar
     local Bar = Create("Frame", {
         Size = UDim2.new(1, 0, 0, 2),
         BorderSizePixel = 0,
-        ZIndex = 10,
         Parent = Main
     })
     Create("UIGradient", { Color = Theme.AccentGradient, Parent = Bar })
 
-    -- Top bar with controls
-    local TopBar = Create("Frame", {
-        Size = UDim2.new(1, 0, 0, 30),
-        Position = UDim2.new(0, 0, 0, 2),
-        BackgroundColor3 = Color3.fromRGB(12, 12, 18),
-        BorderSizePixel = 0,
-        ZIndex = 10,
-        Parent = Main
-    })
-
-    -- Window title
-    Create("TextLabel", {
-        Size = UDim2.new(0, 200, 1, 0),
-        Position = UDim2.new(0, 10, 0, 0),
-        BackgroundTransparency = 1,
-        Text = titleText:upper(),
-        TextColor3 = Theme.TextDark,
-        Font = Fatality.Font,
-        TextSize = 13,
-        TextXAlignment = Enum.TextXAlignment.Left,
-        Parent = TopBar
-    })
-
-    -- Close button
-    local CloseBtn = Create("TextButton", {
-        Size = UDim2.new(0, 30, 0, 20),
-        Position = UDim2.new(1, -40, 0.5, -10),
-        BackgroundColor3 = Color3.fromRGB(30, 30, 40),
-        Text = "×",
-        TextColor3 = Theme.Text,
-        Font = Fatality.Font,
-        TextSize = 18,
-        BorderSizePixel = 0,
-        Parent = TopBar
-    })
-
-    CloseBtn.MouseButton1Click:Connect(function()
-        Window.Visible = false
-        Main.Visible = false
-    end)
-
-    -- Sidebar
     local Sidebar = Create("Frame", {
-        Size = UDim2.new(0, 160, 1, -32),
-        Position = UDim2.new(0, 0, 0, 32),
+        Size = UDim2.new(0, 160, 1, -2),
+        Position = UDim2.new(0, 0, 0, 2),
         BackgroundColor3 = Theme.Sidebar,
         BorderSizePixel = 0,
-        ZIndex = 5,
         Parent = Main
     })
-
-    -- Logo
     local Logo = Create("TextLabel", {
         Size = UDim2.new(1, 0, 0, 60),
         BackgroundTransparency = 1,
@@ -342,86 +283,34 @@ function Fatality:CreateWindow(titleText)
         Parent = Sidebar
     })
     Create("UIGradient", { Color = Theme.AccentGradient, Parent = Logo })
-
-    -- Tab buttons container
     local TabContainer = Create("Frame", {
         Size = UDim2.new(1, 0, 1, -60),
         Position = UDim2.new(0, 0, 0, 60),
         BackgroundTransparency = 1,
         Parent = Sidebar
     })
-    Create("UIListLayout", { 
-        SortOrder = Enum.SortOrder.LayoutOrder, 
-        Padding = UDim.new(0, 2),
-        Parent = TabContainer 
-    })
-
-    -- Page container
+    Create("UIListLayout", { SortOrder = Enum.SortOrder.LayoutOrder, Parent = TabContainer })
     local PageContainer = Create("Frame", {
-        Size = UDim2.new(1, -165, 1, -42),
-        Position = UDim2.new(0, 165, 0, 38),
+        Size = UDim2.new(1, -170, 1, -15),
+        Position = UDim2.new(0, 165, 0, 10),
         BackgroundTransparency = 1,
-        ZIndex = 5,
         Parent = Main
     })
-
-    -- Bottom bar
-    local BottomBar = Create("Frame", {
-        Size = UDim2.new(1, 0, 0, 20),
-        Position = UDim2.new(0, 0, 1, -20),
-        BackgroundColor3 = Color3.fromRGB(12, 12, 18),
-        BorderSizePixel = 0,
-        ZIndex = 10,
-        Parent = Main
-    })
-
-    local FPSText = Create("TextLabel", {
-        Size = UDim2.new(1, -10, 1, 0),
-        Position = UDim2.new(0, 10, 0, 0),
-        BackgroundTransparency = 1,
-        Text = "fatality.win | FPS: 60",
-        TextColor3 = Theme.TextDark,
-        Font = Fatality.Font,
-        TextSize = 11,
-        TextXAlignment = Enum.TextXAlignment.Left,
-        Parent = BottomBar
-    })
-
-    -- Update FPS
-    spawn(function()
-        while BottomBar and BottomBar.Parent do
-            wait(1)
-            if FPSText and FPSText.Parent then
-                local fps = math.floor(1 / RunService.RenderStepped:Wait())
-                FPSText.Text = "fatality.win | FPS: " .. fps
-            end
-        end
-    end)
-
-    -- Dragging functionality
     local dragging, dragStart, startPos
-    TopBar.InputBegan:Connect(function(input)
+    Main.InputBegan:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 then
-            dragging = true
-            dragStart = input.Position
-            startPos = Main.Position
+            dragging = true; dragStart = input.Position; startPos = Main.Position
         end
     end)
-    
     UserInputService.InputChanged:Connect(function(input)
         if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
             local delta = input.Position - dragStart
             Main.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
         end
     end)
-    
-    UserInputService.InputEnded:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 then
-            dragging = false
-        end
-    end)
+    Main.InputEnded:Connect(function(input) if input.UserInputType == Enum.UserInputType.MouseButton1 then dragging = false end end)
 
-    -- Toggle window visibility
+    -- Перемикання видимості вікна (Insert / RightShift)
     UserInputService.InputBegan:Connect(function(input)
         if input.KeyCode == Enum.KeyCode.Insert or input.KeyCode == Enum.KeyCode.RightShift then
             Window.Visible = not Window.Visible
@@ -429,11 +318,8 @@ function Fatality:CreateWindow(titleText)
         end
     end)
 
-    -- Function to add tabs
     function Window:AddTab(name)
         local Sections = {}
-        
-        -- Tab button
         local TabBtn = Create("TextButton", {
             Size = UDim2.new(1, 0, 0, 40),
             BackgroundTransparency = 1,
@@ -444,7 +330,23 @@ function Fatality:CreateWindow(titleText)
             Parent = TabContainer
         })
 
-        -- Tab page (ScrollingFrame)
+        -- Tab hover effect
+        TabBtn.MouseEnter:Connect(function()
+            if not (Page.Visible) then
+                TweenService:Create(TabBtn, TweenInfo.new(0.2), {
+                    TextColor3 = Theme.Text
+                }):Play()
+            end
+        end)
+
+        TabBtn.MouseLeave:Connect(function()
+            if not (Page.Visible) then
+                TweenService:Create(TabBtn, TweenInfo.new(0.2), {
+                    TextColor3 = Theme.TextDark
+                }):Play()
+            end
+        end)
+
         local Page = Create("ScrollingFrame", {
             Size = UDim2.new(1, 0, 1, 0),
             BackgroundTransparency = 1,
@@ -452,59 +354,35 @@ function Fatality:CreateWindow(titleText)
             ScrollBarThickness = 2,
             ScrollBarImageColor3 = Fatality.Accent,
             BorderSizePixel = 0,
-            CanvasSize = UDim2.new(0, 0, 0, 0),
-            Parent = PageContainer
+            Parent = PageContainer,
+            CanvasSize = UDim2.new(0, 0, 0, 0)
         })
-        
         Create("UIListLayout", { 
             Padding = UDim.new(0, 15),
             SortOrder = Enum.SortOrder.LayoutOrder,
             Parent = Page
         })
 
-        -- Auto-update canvas size
-        Page.ChildAdded:Connect(function()
-            wait(0.1)
-            local contentSize = 0
-            for _, child in ipairs(Page:GetChildren()) do
-                if child:IsA("Frame") then
-                    contentSize = contentSize + child.AbsoluteSize.Y + 15
-                end
-            end
-            Page.CanvasSize = UDim2.new(0, 0, 0, contentSize)
-        end)
-
-        -- Tab click handler
         TabBtn.MouseButton1Click:Connect(function()
-            -- Hide all pages
-            for _, v in pairs(PageContainer:GetChildren()) do 
-                if v:IsA("ScrollingFrame") then
-                    v.Visible = false 
-                end
-            end
-            
-            -- Reset all tab colors
-            for _, v in pairs(TabContainer:GetChildren()) do 
-                if v:IsA("TextButton") then 
-                    v.TextColor3 = Theme.TextDark 
-                end 
-            end
-            
-            -- Show selected page and highlight tab
+            for _, v in pairs(PageContainer:GetChildren()) do v.Visible = false end
+            for _, v in pairs(TabContainer:GetChildren()) do if v:IsA("TextButton") then v.TextColor3 = Theme.TextDark end end
             Page.Visible = true
             TabBtn.TextColor3 = Theme.Text
+            
+            -- Animate page transition
+            Page.Position = UDim2.new(0, 50, 0, 0)
+            TweenService:Create(Page, TweenInfo.new(0.3, Enum.EasingStyle.Quad), {
+                Position = UDim2.new(0, 0, 0, 0)
+            }):Play()
         end)
 
-        -- Select first tab automatically
-        if #TabContainer:GetChildren() == 2 then -- Logo + first tab button
-            Page.Visible = true
-            TabBtn.TextColor3 = Theme.Text
+        if #TabContainer:GetChildren() <= 2 then
+            Page.Visible = true; TabBtn.TextColor3 = Theme.Text
         end
 
-        -- Add section method
         function Sections:AddSection(sName)
             local SectionOuter = Create("Frame", {
-                Size = UDim2.new(1, -10, 0, 30),
+                Size = UDim2.new(1, -5, 0, 30),
                 BackgroundColor3 = Theme.Section,
                 BorderSizePixel = 0,
                 Parent = Page
@@ -533,19 +411,87 @@ function Fatality:CreateWindow(titleText)
                 BackgroundTransparency = 1,
                 Parent = SectionOuter
             })
-            
             local Layout = Create("UIListLayout", { 
                 Padding = UDim.new(0, 8),
                 SortOrder = Enum.SortOrder.LayoutOrder,
                 Parent = Content 
             })
 
-            -- Update section size when content changes
             Layout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
-                SectionOuter.Size = UDim2.new(1, -10, 0, Layout.AbsoluteContentSize.Y + 25)
+                SectionOuter.Size = UDim2.new(1, -5, 0, Layout.AbsoluteContentSize.Y + 25)
             end)
 
             local Elements = {}
+
+            function Elements:AddColorPicker(text, default, flag, callback)
+                local CP = { Value = default, Type = "ColorPicker" }
+                local Frame = Create("Frame", { 
+                    Size = UDim2.new(1, 0, 0, 20), 
+                    BackgroundTransparency = 1, 
+                    Parent = Content 
+                })
+                
+                local Label = Create("TextLabel", {
+                    Size = UDim2.new(1, -30, 1, 0),
+                    Position = UDim2.new(0, 0, 0, 0),
+                    BackgroundTransparency = 1,
+                    Text = text,
+                    TextColor3 = Theme.Text,
+                    Font = Fatality.Font,
+                    TextSize = 13,
+                    TextXAlignment = Enum.TextXAlignment.Left,
+                    Parent = Frame
+                })
+
+                local Box = Create("TextButton", {
+                    Size = UDim2.new(0, 25, 0, 14),
+                    Position = UDim2.new(1, -30, 0.5, -7),
+                    BackgroundColor3 = default,
+                    BorderSizePixel = 0,
+                    Text = "",
+                    Parent = Frame
+                })
+                Create("UIStroke", { Color = Theme.Outline, Thickness = 1, Parent = Box })
+
+                function CP:Set(val)
+                    if typeof(val) == "table" then val = Color3.new(val.R, val.G, val.B) end
+                    CP.Value = val
+                    Box.BackgroundColor3 = val
+                    if callback then callback(val) end
+                end
+
+                Box.MouseButton1Click:Connect(function() 
+                    if callback then callback(CP.Value) end
+                end)
+                
+                -- Color picker popup
+                local colorPickerOpen = false
+                Box.MouseButton2Click:Connect(function()
+                    -- Here you could implement a full color picker
+                    -- For now, we'll cycle through some preset colors
+                    local colors = {
+                        Color3.fromRGB(255, 0, 0),
+                        Color3.fromRGB(0, 255, 0),
+                        Color3.fromRGB(0, 0, 255),
+                        Color3.fromRGB(255, 255, 0),
+                        Color3.fromRGB(255, 0, 255),
+                        Color3.fromRGB(0, 255, 255),
+                        Color3.fromRGB(255, 255, 255),
+                    }
+                    local currentIndex = 1
+                    for i, color in ipairs(colors) do
+                        if color == CP.Value then
+                            currentIndex = i
+                            break
+                        end
+                    end
+                    currentIndex = (currentIndex % #colors) + 1
+                    CP:Set(colors[currentIndex])
+                end)
+
+                if flag then Fatality.Options[flag] = CP end
+                return CP
+            end
 
             function Elements:AddToggle(text, default, flag, callback)
                 local Tgl = { Value = default, Type = "Toggle" }
@@ -560,9 +506,8 @@ function Fatality:CreateWindow(titleText)
                     Position = UDim2.new(0, 0, 0.5, -7),
                     BackgroundColor3 = Tgl.Value and Fatality.Accent or Theme.Outline,
                     Text = "",
-                    AutoButtonColor = false,
-                    BorderSizePixel = 0,
-                    Parent = Frame
+                    Parent = Frame,
+                    AutoButtonColor = false
                 })
                 Create("UIStroke", { Color = Theme.Outline, Thickness = 1, Parent = Box })
 
@@ -580,9 +525,10 @@ function Fatality:CreateWindow(titleText)
 
                 function Tgl:Set(val)
                     Tgl.Value = val
-                    TweenService:Create(Box, TweenInfo.new(0.2), {
+                    local tween = TweenService:Create(Box, TweenInfo.new(0.2), {
                         BackgroundColor3 = val and Fatality.Accent or Theme.Outline
-                    }):Play()
+                    })
+                    tween:Play()
                     if callback then callback(val) end
                 end
 
@@ -590,7 +536,10 @@ function Fatality:CreateWindow(titleText)
                     Tgl:Set(not Tgl.Value)
                 end)
 
-                if flag then Fatality.Options[flag] = Tgl end
+                if flag then
+                    Fatality.Options[flag] = Tgl
+                end
+
                 return Tgl
             end
 
@@ -602,7 +551,7 @@ function Fatality:CreateWindow(titleText)
                     Parent = Content 
                 })
                 
-                Create("TextLabel", { 
+                local Label = Create("TextLabel", { 
                     Size = UDim2.new(1, 0, 0, 18), 
                     BackgroundTransparency = 1, 
                     Text = text, 
@@ -641,7 +590,9 @@ function Fatality:CreateWindow(titleText)
                 function Sld:Set(v)
                     local p = math.clamp((v - min) / (max - min), 0, 1)
                     Sld.Value = v
-                    Fill.Size = UDim2.new(p, 0, 1, 0)
+                    TweenService:Create(Fill, TweenInfo.new(0.15), {
+                        Size = UDim2.new(p, 0, 1, 0)
+                    }):Play()
                     ValText.Text = tostring(v)
                     if callback then callback(v) end
                 end
@@ -672,26 +623,11 @@ function Fatality:CreateWindow(titleText)
                     end 
                 end)
 
-                if flag then Fatality.Options[flag] = Sld end
+                if flag then
+                    Fatality.Options[flag] = Sld
+                end
+
                 return Sld
-            end
-
-            function Elements:AddButton(text, callback)
-                local Btn = Create("TextButton", {
-                    Size = UDim2.new(1, 0, 0, 28),
-                    BackgroundColor3 = Fatality.Accent,
-                    Text = text:upper(),
-                    TextColor3 = Theme.Text,
-                    Font = Fatality.Font,
-                    TextSize = 13,
-                    AutoButtonColor = false,
-                    BorderSizePixel = 0,
-                    Parent = Content
-                })
-                Create("UIStroke", { Color = Fatality.Secondary, Thickness = 1, Parent = Btn })
-
-                Btn.MouseButton1Click:Connect(callback)
-                return Btn
             end
 
             function Elements:AddKeybind(text, default, flag, callback)
@@ -747,8 +683,135 @@ function Fatality:CreateWindow(titleText)
                     end
                 end)
 
-                if flag then Fatality.Options[flag] = Bind end
+                if flag then
+                    Fatality.Options[flag] = Bind
+                end
+
                 return Bind
+            end
+
+            function Elements:AddButton(text, callback)
+                local Btn = Create("TextButton", {
+                    Size = UDim2.new(1, 0, 0, 28),
+                    BackgroundColor3 = Fatality.Accent,
+                    Text = text:upper(),
+                    TextColor3 = Theme.Text,
+                    Font = Fatality.Font,
+                    TextSize = 13,
+                    AutoButtonColor = false,
+                    BorderSizePixel = 0,
+                    Parent = Content
+                })
+                Create("UIStroke", { Color = Fatality.Secondary, Thickness = 1, Parent = Btn })
+
+                Btn.MouseEnter:Connect(function()
+                    TweenService:Create(Btn, TweenInfo.new(0.2), {
+                        BackgroundColor3 = Fatality.Secondary
+                    }):Play()
+                end)
+
+                Btn.MouseLeave:Connect(function()
+                    TweenService:Create(Btn, TweenInfo.new(0.2), {
+                        BackgroundColor3 = Fatality.Accent
+                    }):Play()
+                end)
+
+                Btn.MouseButton1Click:Connect(callback)
+                return Btn
+            end
+
+            function Elements:AddDropdown(text, options, default, flag, callback)
+                local DD = { Value = default, Type = "Dropdown", Open = false }
+                local DDFrame = Create("Frame", { 
+                    Size = UDim2.new(1, 0, 0, 20), 
+                    BackgroundTransparency = 1, 
+                    Parent = Content 
+                })
+                
+                local Label = Create("TextLabel", { 
+                    Size = UDim2.new(0, 100, 1, 0), 
+                    BackgroundTransparency = 1, 
+                    Text = text, 
+                    TextColor3 = Theme.Text, 
+                    Font = Fatality.Font, 
+                    TextSize = 13, 
+                    TextXAlignment = Enum.TextXAlignment.Left, 
+                    Parent = DDFrame 
+                })
+                
+                local Selector = Create("TextButton", {
+                    Size = UDim2.new(1, -110, 1, 0),
+                    Position = UDim2.new(0, 110, 0, 0),
+                    BackgroundColor3 = Theme.Outline,
+                    Text = default,
+                    TextColor3 = Theme.Text,
+                    Font = Fatality.Font,
+                    TextSize = 13,
+                    AutoButtonColor = false,
+                    Parent = DDFrame
+                })
+
+                local DropList = Create("Frame", {
+                    Size = UDim2.new(1, -110, 0, 0),
+                    Position = UDim2.new(0, 110, 1, 0),
+                    BackgroundColor3 = Theme.Sidebar,
+                    ClipsDescendants = true,
+                    Visible = false,
+                    ZIndex = 20,
+                    Parent = DDFrame
+                })
+
+                local ListLayout = Create("UIListLayout", {
+                    SortOrder = Enum.SortOrder.LayoutOrder,
+                    Parent = DropList
+                })
+
+                function DD:Set(val)
+                    DD.Value = val
+                    Selector.Text = val
+                    if callback then callback(val) end
+                end
+
+                for _, option in ipairs(options) do
+                    local OptionBtn = Create("TextButton", {
+                        Size = UDim2.new(1, 0, 0, 20),
+                        BackgroundColor3 = Theme.Sidebar,
+                        Text = option,
+                        TextColor3 = Theme.TextDark,
+                        Font = Fatality.Font,
+                        TextSize = 12,
+                        AutoButtonColor = false,
+                        Parent = DropList
+                    })
+                    
+                    OptionBtn.MouseEnter:Connect(function()
+                        OptionBtn.BackgroundColor3 = Fatality.Accent
+                    end)
+                    
+                    OptionBtn.MouseLeave:Connect(function()
+                        OptionBtn.BackgroundColor3 = Theme.Sidebar
+                    end)
+                    
+                    OptionBtn.MouseButton1Click:Connect(function()
+                        DD:Set(option)
+                        DD.Open = false
+                        DropList.Visible = false
+                    end)
+                end
+
+                Selector.MouseButton1Click:Connect(function()
+                    DD.Open = not DD.Open
+                    DropList.Visible = DD.Open
+                    if DD.Open then
+                        DropList.Size = UDim2.new(1, -110, 0, ListLayout.AbsoluteContentSize.Y)
+                    end
+                end)
+
+                if flag then
+                    Fatality.Options[flag] = DD
+                end
+
+                return DD
             end
 
             return Elements
@@ -760,6 +823,7 @@ function Fatality:CreateWindow(titleText)
     return Window
 end
 
+-- Theme customization
 function Fatality:SetTheme(accent, secondary)
     Fatality.Accent = accent or Fatality.Accent
     Fatality.Secondary = secondary or Fatality.Secondary
@@ -777,8 +841,7 @@ function Fatality:Notify(title, text, duration)
             Name = "FatalityNotifications",
             Parent = CoreGui,
             DisplayOrder = 1000,
-            ZIndexBehavior = Enum.ZIndexBehavior.Global,
-            ResetOnSpawn = false
+            ZIndexBehavior = Enum.ZIndexBehavior.Global
         })
     end
 
@@ -787,55 +850,7 @@ function Fatality:Notify(title, text, duration)
         Position = UDim2.new(1, 10, 1, -70),
         BackgroundColor3 = Theme.Main,
         BorderSizePixel = 0,
-        ZIndex = 1000,
-        Parent = notifyGui
+        Parent = notifyGui,
+        ZIndex = 1000
     })
-    Create("UIStroke", { Color = Theme.Outline, Thickness = 1, Parent = NotifyFrame })
-    Create("UICorner", { CornerRadius = UDim.new(0, 4), Parent = NotifyFrame })
-    
-    local Line = Create("Frame", { 
-        Size = UDim2.new(1, 0, 0, 2),
-        ZIndex = 1001,
-        Parent = NotifyFrame 
-    })
-    Create("UIGradient", { Color = Theme.AccentGradient, Parent = Line })
-
-    Create("TextLabel", { 
-        Size = UDim2.new(1, -20, 0, 25), 
-        Position = UDim2.new(0, 10, 0, 5), 
-        BackgroundTransparency = 1, 
-        Text = title:upper(), 
-        TextColor3 = Fatality.Accent, 
-        Font = Fatality.Font, 
-        TextSize = 14, 
-        TextXAlignment = Enum.TextXAlignment.Left,
-        ZIndex = 1001,
-        Parent = NotifyFrame 
-    })
-    
-    Create("TextLabel", { 
-        Size = UDim2.new(1, -20, 0, 25), 
-        Position = UDim2.new(0, 10, 0, 25), 
-        BackgroundTransparency = 1, 
-        Text = text, 
-        TextColor3 = Theme.Text, 
-        Font = Fatality.Font, 
-        TextSize = 12, 
-        TextXAlignment = Enum.TextXAlignment.Left, 
-        TextWrapped = true,
-        ZIndex = 1001,
-        Parent = NotifyFrame 
-    })
-
-    NotifyFrame:TweenPosition(UDim2.new(1, -250, 1, -70), "Out", "Quart", 0.5)
-    
-    task.delay(duration, function()
-        if NotifyFrame and NotifyFrame.Parent then
-            NotifyFrame:TweenPosition(UDim2.new(1, 10, 1, -70), "In", "Quart", 0.5)
-            task.wait(0.5)
-            NotifyFrame:Destroy()
-        end
-    end)
-end
-
-return Fatality
+    Create("UIStroke", { Color = Theme.Outline
