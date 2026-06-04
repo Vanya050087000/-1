@@ -77,13 +77,82 @@ function Fatality:CreateWindow(titleText)
         ZIndexBehavior = Enum.ZIndexBehavior.Global
     })
 
+    -- Загрузочный экран (Fatality Style)
+    local Loading = Create("Frame",{
+        Size = UDim2.new(0, 400, 0, 140),
+        Position = UDim2.new(0.5, -200, 0.5, -70),
+        BackgroundColor3 = Theme.Main,
+        Parent = ScreenGui,
+        ZIndex = 100
+    })
+
+    local LoadingText = Create("TextLabel",{
+        Size = UDim2.new(1, 0, 0, 40),
+        Position = UDim2.new(0, 0, 0, 20),
+        BackgroundTransparency = 1,
+        Text = "FATALITY.WIN",
+        Font = Fatality.Font,
+        TextSize = 26,
+        TextColor3 = Color3.new(1, 1, 1),
+        Parent = Loading,
+        ZIndex = 101
+    })
+
+    local BarBg = Create("Frame",{
+        Size = UDim2.new(0.8, 0, 0, 4),
+        Position = UDim2.new(0.1, 0, 0.7, 0),
+        BackgroundColor3 = Theme.Outline,
+        Parent = Loading,
+        ZIndex = 101
+    })
+
+    local Fill = Create("Frame",{
+        Size = UDim2.new(0, 0, 1, 0),
+        Parent = BarBg,
+        ZIndex = 102
+    })
+
+    Create("UIGradient",{
+        Color = Theme.AccentGradient,
+        Parent = Fill
+    })
+
     local Main = Create("Frame", {
         Size = UDim2.new(0, 680, 0, 540),
         Position = UDim2.new(0.5, -310, 0.5, -240),
         BackgroundColor3 = Theme.Main,
         BorderSizePixel = 0,
-        Parent = ScreenGui
+        Parent = ScreenGui,
+        Visible = false -- Скрыто до окончания загрузки
     })
+
+    -- Эффект молний на фоне
+    local LightningFolder = Instance.new("Folder")
+    LightningFolder.Name = "LightningBackground"
+    LightningFolder.Parent = Main
+
+    for i = 1, 8 do
+        local line = Instance.new("Frame")
+        line.Parent = LightningFolder
+        line.BorderSizePixel = 0
+        line.BackgroundColor3 = Color3.fromRGB(180, 0, 255)
+        line.BackgroundTransparency = 0.85
+        line.Size = UDim2.new(0, math.random(80, 180), 0, 2)
+        line.Position = UDim2.new(math.random(), 0, math.random(), 0)
+        line.Rotation = math.random(-70, 70)
+        line.ZIndex = 0
+
+        task.spawn(function()
+            while line.Parent do
+                line.Visible = false
+                task.wait(math.random(1, 4))
+                line.Visible = true
+                TweenService:Create(line, TweenInfo.new(0.15), {BackgroundTransparency = 1}):Play()
+                task.wait(0.15)
+                line.BackgroundTransparency = 0.85
+            end
+        end)
+    end
 
     local Bar = Create("Frame", {
         Size = UDim2.new(1, 0, 0, 2),
@@ -120,8 +189,8 @@ function Fatality:CreateWindow(titleText)
     Create("UIListLayout", { SortOrder = Enum.SortOrder.LayoutOrder, Parent = TabContainer })
 
     local PageContainer = Create("Frame", {
-        Size = UDim2.new(1, -170, 1, -15),
-        Position = UDim2.new(0, 165, 0, 10),
+        Size = UDim2.new(1, -170, 1, -50),
+        Position = UDim2.new(0, 165, 0, 35),
         BackgroundTransparency = 1,
         Parent = Main
     })
@@ -146,6 +215,14 @@ function Fatality:CreateWindow(titleText)
             Window.Visible = not Window.Visible
             Main.Visible = Window.Visible
         end
+    end)
+
+    -- Анимация загрузки
+    task.spawn(function()
+        TweenService:Create(Fill, TweenInfo.new(2.5), {Size = UDim2.new(1, 0, 1, 0)}):Play()
+        task.wait(2.5)
+        Loading:Destroy()
+        Main.Visible = true
     end)
 
     function Window:AddTab(name)
