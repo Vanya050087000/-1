@@ -78,7 +78,7 @@ function Fatality:CreateWindow(titleText)
     })
 
     local Main = Create("Frame", {
-        Size = UDim2.new(0, 620, 0, 500), -- Увеличил высоту для футера
+        Size = UDim2.new(0, 680, 0, 540),
         Position = UDim2.new(0.5, -310, 0.5, -240),
         BackgroundColor3 = Theme.Main,
         BorderSizePixel = 0,
@@ -92,61 +92,14 @@ function Fatality:CreateWindow(titleText)
     })
     Create("UIGradient", { Color = Theme.AccentGradient, Parent = Bar })
 
-    -- Top Bar (Header)
-    local TopBar = Create("Frame", {
-        Size = UDim2.new(1, 0, 0, 30),
-        Position = UDim2.new(0, 0, 0, 2),
-        BackgroundColor3 = Color3.fromRGB(12, 12, 18),
-        BorderSizePixel = 0,
-        Parent = Main
-    })
-
-    Create("TextLabel", {
-        Size = UDim2.new(0, 200, 1, 0),
-        Position = UDim2.new(0, 10, 0, 0),
-        BackgroundTransparency = 1,
-        Text = titleText:upper(),
-        TextColor3 = Theme.TextDark,
-        Font = Fatality.Font,
-        TextSize = 13,
-        TextXAlignment = Enum.TextXAlignment.Left,
-        Parent = TopBar
-    })
-
-    -- Bottom Bar (Footer)
-    local BottomBar = Create("Frame", {
-        Size = UDim2.new(1, 0, 0, 20),
-        Position = UDim2.new(0, 0, 1, -20),
-        BackgroundColor3 = Color3.fromRGB(12, 12, 18),
-        BorderSizePixel = 0,
-        Parent = Main
-    })
-
-    local FooterLabel = Create("TextLabel", {
-        Size = UDim2.new(1, -10, 1, 0),
-        Position = UDim2.new(0, 10, 0, 0),
-        BackgroundTransparency = 1,
-        Text = "fatality.win | version 2.0 | fps: 0",
-        TextColor3 = Theme.TextDark,
-        Font = Fatality.Font,
-        TextSize = 11,
-        TextXAlignment = Enum.TextXAlignment.Left,
-        Parent = BottomBar
-    })
-
-    task.spawn(function()
-        while task.wait(1) do
-            FooterLabel.Text = "fatality.win | version 2.0 | fps: " .. math.floor(workspace:GetRealPhysicsFPS())
-        end
-    end)
-
     local Sidebar = Create("Frame", {
-        Size = UDim2.new(0, 160, 1, -52), -- Высота с учетом Top/Bottom Bars
-        Position = UDim2.new(0, 0, 0, 32),
+        Size = UDim2.new(0, 160, 1, -2),
+        Position = UDim2.new(0, 0, 0, 2),
         BackgroundColor3 = Theme.Sidebar,
         BorderSizePixel = 0,
         Parent = Main
     })
+
     local Logo = Create("TextLabel", {
         Size = UDim2.new(1, 0, 0, 60),
         BackgroundTransparency = 1,
@@ -167,8 +120,8 @@ function Fatality:CreateWindow(titleText)
     Create("UIListLayout", { SortOrder = Enum.SortOrder.LayoutOrder, Parent = TabContainer })
 
     local PageContainer = Create("Frame", {
-        Size = UDim2.new(1, -170, 1, -52),
-        Position = UDim2.new(0, 165, 0, 32),
+        Size = UDim2.new(1, -170, 1, -15),
+        Position = UDim2.new(0, 165, 0, 10),
         BackgroundTransparency = 1,
         Parent = Main
     })
@@ -216,13 +169,7 @@ function Fatality:CreateWindow(titleText)
             BorderSizePixel = 0,
             Parent = PageContainer
         })
-        Create("UIListLayout", { Padding = UDim.new(0, 15), SortOrder = Enum.SortOrder.LayoutOrder, Parent = Page })
-        
-        -- Отступ сверху, чтобы функции начинались ниже
-        Create("UIPadding", {
-            PaddingTop = UDim.new(0, 25),
-            Parent = Page
-        })
+        Create("UIListLayout", { Padding = UDim.new(0, 15), Parent = Page })
 
         TabBtn.MouseButton1Click:Connect(function()
             for _, v in pairs(PageContainer:GetChildren()) do v.Visible = false end
