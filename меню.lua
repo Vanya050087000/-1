@@ -1,5 +1,6 @@
 --[[
-    FATALITY.WIN
+    FATALITY.WIN UI FRAMEWORK
+    Style: Fatality CS:GO (Purple/Pink/Dark)
 ]]
 
 local UserInputService = game:GetService("UserInputService")
@@ -77,7 +78,7 @@ function Fatality:CreateWindow(titleText)
     })
 
     local Main = Create("Frame", {
-        Size = UDim2.new(0, 620, 0, 480),
+        Size = UDim2.new(0, 680, 0, 540),
         Position = UDim2.new(0.5, -310, 0.5, -240),
         BackgroundColor3 = Theme.Main,
         BorderSizePixel = 0,
@@ -243,42 +244,6 @@ function Fatality:CreateWindow(titleText)
 
                 function CP:Set(val)
                     if typeof(val) == "table" then val = Color3.new(val.R, val.G, val.B) end
-                    CP.Value = val
-                    Box.BackgroundColor3 = val
-                    callback(val)
-                end
-
-                Box.MouseButton1Click:Connect(function() callback(CP.Value) end)
-                if flag then Fatality.Options[flag] = CP end
-                return CP
-            end
-
-            function Elements:AddColorPicker(text, default, flag, callback)
-                local CP = { Value = default, Type = "ColorPicker" }
-                local Frame = Create("Frame", { Size = UDim2.new(1, 0, 0, 20), BackgroundTransparency = 1, Parent = Content })
-                
-                local Label = Create("TextLabel", {
-                    Size = UDim2.new(1, -30, 1, 0),
-                    Position = UDim2.new(0, 0, 0, 0),
-                    BackgroundTransparency = 1,
-                    Text = text,
-                    TextColor3 = Theme.Text,
-                    Font = Fatality.Font,
-                    TextSize = 13,
-                    TextXAlignment = Enum.TextXAlignment.Left,
-                    Parent = Frame
-                })
-
-                local Box = Create("TextButton", {
-                    Size = UDim2.new(0, 25, 0, 14),
-                    Position = UDim2.new(1, -30, 0.5, -7),
-                    BackgroundColor3 = default,
-                    BorderSizePixel = 0,
-                    Text = "",
-                    Parent = Frame
-                })
-
-                function CP:Set(val)
                     CP.Value = val
                     Box.BackgroundColor3 = val
                     callback(val)
