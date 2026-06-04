@@ -951,4 +951,65 @@ function Fatality:Notify(title, text, duration)
         Parent = notifyGui,
         ZIndex = 1000
     })
-    Create("UIStroke", { Color = Theme.Outline
+    Create("UIStroke", { Color = Theme.Outline, Thickness = 1, Parent = NotifyFrame })
+    Create("UICorner", { CornerRadius = UDim.new(0, 4), Parent = NotifyFrame })
+    
+    local Line = Create("Frame", { 
+        Size = UDim2.new(1, 0, 0, 2), 
+        Parent = NotifyFrame 
+    })
+    Create("UIGradient", { Color = Theme.AccentGradient, Parent = Line })
+
+    Create("TextLabel", { 
+        Size = UDim2.new(1, -20, 0, 25), 
+        Position = UDim2.new(0, 10, 0, 5), 
+        BackgroundTransparency = 1, 
+        Text = title:upper(), 
+        TextColor3 = Fatality.Accent, 
+        Font = Fatality.Font, 
+        TextSize = 14, 
+        TextXAlignment = Enum.TextXAlignment.Left, 
+        Parent = NotifyFrame 
+    })
+    Create("TextLabel", { 
+        Size = UDim2.new(1, -20, 0, 25), 
+        Position = UDim2.new(0, 10, 0, 25), 
+        BackgroundTransparency = 1, 
+        Text = text, 
+        TextColor3 = Theme.Text, 
+        Font = Fatality.Font, 
+        TextSize = 12, 
+        TextXAlignment = Enum.TextXAlignment.Left, 
+        TextWrapped = true,
+        Parent = NotifyFrame 
+    })
+
+    -- Animate in
+    NotifyFrame:TweenPosition(UDim2.new(1, -250, 1, -70), "Out", "Quart", 0.5)
+    
+    -- Progress bar animation
+    spawn(function()
+        local progressBar = Create("Frame", {
+            Size = UDim2.new(1, 0, 0, 1),
+            Position = UDim2.new(0, 0, 1, -1),
+            BackgroundColor3 = Fatality.Accent,
+            Parent = NotifyFrame
+        })
+        TweenService:Create(progressBar, TweenInfo.new(duration, Enum.EasingStyle.Linear), {
+            Size = UDim2.new(0, 0, 0, 1)
+        }):Play()
+    end)
+
+    task.delay(duration, function()
+        NotifyFrame:TweenPosition(UDim2.new(1, 10, 1, -70), "In", "Quart", 0.5)
+        task.wait(0.5)
+        NotifyFrame:Destroy()
+    end)
+end
+
+-- Auto-loading
+spawn(function()
+    Fatality:ShowLoading()
+end)
+
+return Fatality
